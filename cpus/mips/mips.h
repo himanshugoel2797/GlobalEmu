@@ -33,7 +33,10 @@ typedef enum {
         REG_GP = 28,
         REG_SP = 29,
         REG_FP = 30,
-        REG_RA = 31
+        REG_RA = 31,
+        REG_SPECIAL_PC = 32,
+        REG_SPECIAL_HI = 33,
+        REG_SPECIAL_LO = 34
 }MIPS_REGISTERS;
 
 typedef enum {
@@ -88,7 +91,8 @@ typedef enum {
         MIPS_OP_SUB = 0x00,
         MIPS_OP_SUBU = 0x00,
         MIPS_OP_SW = 0x2B,
-        MIPS_OP_TRAP = 0x1A
+        MIPS_OP_TRAP = 0x1A,
+        MIPS_OP_SYSCALL = 0x00
 }MIPS_OPCODES;
 
 typedef enum {
@@ -117,11 +121,11 @@ typedef enum {
         MIPS_FUNCT_SRA = 0x03,
         MIPS_FUNCT_SRAV = 0x07,
         MIPS_FUNCT_SUB = 0x22,
-        MIPS_FUNCT_SUBU = 0x23
+        MIPS_FUNCT_SUBU = 0x23,
+        MIPS_FUNCT_SYSCALL = 12
 }MIPS_FUNCTS;
 
 typedef struct {
-        unsigned int opcode : 6;
         unsigned int rs : 5;
         unsigned int rt : 5;
         unsigned int rd : 5;
@@ -130,15 +134,22 @@ typedef struct {
 }MIPS_INSTRUCTION_R;
 
 typedef struct {
-        unsigned int opcode : 6;
         unsigned int rs : 5;
         unsigned int rt : 5;
         unsigned int imm : 16;
 }MIPS_INSTRUCTION_I;
 
 typedef struct {
-        unsigned int opcode : 6;
         unsigned int address : 24;
 }MIPS_INSTRUCTION_J;
+
+typedef struct {
+        unsigned int opcode : 6;
+        union {
+                MIPS_INSTRUCTION_J j_inst;
+                MIPS_INSTRUCTION_I i_inst;
+                MIPS_INSTRUCTION_R r_inst;
+        } instructionData;
+}MIPS_INSTRUCTION;
 
 #endif
