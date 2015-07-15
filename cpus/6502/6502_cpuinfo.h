@@ -14,10 +14,10 @@ typedef enum {
 }_6502_STATUS_BITS;
 
 typedef enum {
-        ACCUM = 0,
-        X = 1,
-        Y = 2,
-        STATUS = 3
+        REGS_ACCUM = 0,
+        REGS_X = 1,
+        REGS_Y = 2,
+        REGS_STATUS = 3
 }_6502_REGS;
 
 #define REAL_SP_START 0x01ff
