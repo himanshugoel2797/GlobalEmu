@@ -12,4 +12,4 @@ all:clean $(OBJS)
 	$(LD) -t none $(@:.bin=.6502) -o $@
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(@:.bin=.6502)

@@ -5,10 +5,13 @@
 #define _6502_ENDIAN LITTLE_ENDIAN
 
 /// Initialize 6502 processor
-int _6502_initialize(size_t memorySize);
+int _6502_initialize(u8 *mem);
 
 /// Get a pointer to the memory
 u8* _6502_getMemory();
+
+/// Set the pointer to memory
+void _6502_setMemory(u8 *mem);
 
 /// Process a single instruction
 int _6502_processInstruction();

@@ -264,17 +264,19 @@ int _6502_ADC_process(u8 a, u8 b, u8 c)
 
         _6502_STATUS *status = (_6502_STATUS*)&generalPurposeRegisters[REGS_STATUS];
 
-        u16 t = 0;
+        u8 t = 0;
+        u16 tmp = 0;
         if(IsSet(STATUS_DEC))
         {
-                t = bcd(generalPurposeRegisters[REGS_ACCUM]) + bcd(memory[offset]) + IsSet(STATUS_CARRY);
-                status->C = (t > 99);
+                tmp = bcd(generalPurposeRegisters[REGS_ACCUM]) + bcd(memory[offset]) + IsSet(STATUS_CARRY);
+                status->C = (tmp > 99);
         }else{
-                t = generalPurposeRegisters[REGS_ACCUM] + memory[offset] + IsSet(STATUS_CARRY);
-                status->C = (t > 255);
+                tmp = generalPurposeRegisters[REGS_ACCUM] + memory[offset] + IsSet(STATUS_CARRY);
+                status->C = (tmp > 255);
         }
 
-        status->O = (generalPurposeRegisters[REGS_ACCUM] >> 7) != ((t >> 7) & 1);
+        t = tmp & 0xFF;
+        status->O = ((~(generalPurposeRegisters[REGS_ACCUM] ^ memory[offset]))&(generalPurposeRegisters[REGS_ACCUM] ^ t)&0x80) == 0x80;
         status->N = (t >> 7) & 1;
         status->Z = (t == 0);
 
@@ -476,8 +478,6 @@ int _6502_CMP_process(u8 a, u8 b, u8 c)
         status->C = (generalPurposeRegisters[REGS_ACCUM] >= memory[offset]);
         status->Z = (t == 0);
 
-        printf("\nCMP against %08x\n", memory[offset]);
-
         return cycleCount;
 }
 
@@ -550,21 +550,21 @@ int _6502_SBC_process(u8 a, u8 b, u8 c)
                 t = bcd(generalPurposeRegisters[REGS_ACCUM]) - bcd(memory[offset]) - !IsSet(STATUS_CARRY);
                 status->O = (t > 99 | t < 0);
         }else{
-                t = generalPurposeRegisters[REGS_ACCUM] - memory[offset] - !IsSet(STATUS_CARRY);
+                t = (s8)generalPurposeRegisters[REGS_ACCUM] - (s8)memory[offset] - !IsSet(STATUS_CARRY);
         }
 
-        s16 A = generalPurposeRegisters[REGS_ACCUM];
-        s16 M = memory[offset];
+        s8 A = generalPurposeRegisters[REGS_ACCUM];
+        s8 M = memory[offset];
 
-        //if( A >= 0 && M >= 0 && t < 0) status->O = 1;
-        //else if(A < 0 && M < 0 && t >= 0) status->O = 1;
-        //else status->O = 0;
+        if( A >= 0 && M >= 0 && t < 0) status->O = 1;
+        else if(A < 0 && M < 0 && A > M && t < 0) status->O = 1;
+        else if(A < 0 && M < 0 && A < M && t >= 0)status->O = 1;
+        else if(A >= 0 && M < 0 && (-M) < A && t <= 0)status->O = 1;
+        else status->O = 0;
 
-        status->O = (M > A && M > 0 && t > A);
+        status->C = (t >> 7) != (A >> 7);
+        status->C = ((~(generalPurposeRegisters[REGS_ACCUM] ^ memory[offset]))&(generalPurposeRegisters[REGS_ACCUM] ^ t)&0x80) == 0x80;
 
-        printf("\n%d,%d,%d\n", t, A, M);
-
-        status->C = (generalPurposeRegisters[REGS_ACCUM] >= memory[offset]);
         status->N = (t >> 7) & 1;
         status->Z = (t == 0);
 
@@ -887,7 +887,9 @@ int _6502_DEC_process(u8 a, u8 b, u8 c)
                 break;
         }
 
-        memory[offset]--;
+                printf("\n %08x", memory[offset]);
+                memory[offset]--;
+                printf("\n %08x", memory[offset]);
         _6502_STATUS *status = (_6502_STATUS*)&generalPurposeRegisters[REGS_STATUS];
         status->N = (memory[offset] >> 7);
         status->Z = (memory[offset] == 0) ? 1 : 0;
@@ -931,7 +933,9 @@ int _6502_INC_process(u8 a, u8 b, u8 c)
                 break;
         }
 
+        printf("\n %08x", memory[offset]);
         memory[offset]++;
+        printf("\n %08x", memory[offset]);
         _6502_STATUS *status = (_6502_STATUS*)&generalPurposeRegisters[REGS_STATUS];
         status->N = (memory[offset] >> 7);
         status->Z = (memory[offset] == 0) ? 1 : 0;

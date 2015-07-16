@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         {
                 u16 pc = _6502_getPC();
                 if(_6502_processInstruction() < 0)cont = 0;
-                printf("A: 0x%02x X: 0x%02x Y: 0x%02x STATUS: 0x%02x SP: 0x%02x PC: 0x%04x\n", _6502_getRegister(0), _6502_getRegister(1),_6502_getRegister(2), _6502_getRegister(3), _6502_getSP(), pc);
+                printf("A: 0x%02x X: 0x%02x Y: 0x%02x S: 0x%02x SP: 0x%02x PC: 0x%04x\n", _6502_getRegister(0), _6502_getRegister(1),_6502_getRegister(2), _6502_getRegister(3), _6502_getSP(), pc);
         }
 
         return 0;
