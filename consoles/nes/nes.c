@@ -2,7 +2,7 @@
 
 int nes_initialize()
 {
-        _6502_initialize((u16)-1);    //Initialize the cpu with as much RAM as the 16bit bus can address
+        _6502_initialize(0x10000);    //Initialize the cpu with as much RAM as the 16bit bus can address
 
         //Setup the system startup state
         u8 *memory = _6502_getMemory();
@@ -20,4 +20,10 @@ int nes_initialize()
         for(int i = 0x4000; i <= 0x400F; i++)memory[i] = 0x00;
 
         return 0;
+}
+
+int nes_loadProgram(u8 *prog, size_t len)
+{
+    memcpy(_6502_getMemory(), prog, len);
+    return 0;
 }

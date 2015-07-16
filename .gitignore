@@ -29,6 +29,9 @@
 *.hex
 *.elf
 *.velf
+*.bin
+*.6502
+*.nes
 
 # Debug files
 *.dSYM/

@@ -20,10 +20,32 @@ typedef enum {
         REGS_STATUS = 3
 }_6502_REGS;
 
+typedef struct {
+        u8 C : 1;
+        u8 Z : 1;
+        u8 I : 1;
+        u8 D : 1;
+        u8 B : 1;
+        u8 U : 1;
+        u8 O : 1;
+        u8 N : 1;
+}_6502_STATUS;
+
+extern u8 *memory;
+extern u8 generalPurposeRegisters[4];
+extern u8 sp;
+extern u8 *spLoc;
+extern u16 pc;
+
 #define REAL_SP_START 0x01ff
 #define REAL_SP_END 0x0100
 #define SOFT_SP_START 0xff
 #define SOFT_SP_END 0x00
+
+static inline int IsSet(_6502_STATUS_BITS bit)
+{
+        return (generalPurposeRegisters[REGS_STATUS] >> bit) & 1;
+}
 
 typedef enum {
         A = 1,
@@ -75,8 +97,8 @@ typedef enum {
 
 typedef enum {
         _6502_BIT = 1,
-        _6502_JMP = 2,
-        _6502_JMP_A = 3,
+        _6502_JMP_A = 2,
+        _6502_JMP = 3,
         _6502_STY = 4,
         _6502_LDY = 5,
         _6502_CPY = 6,
@@ -115,7 +137,20 @@ typedef enum {
         _6502_TSX = 0xBA,
         _6502_DEX = 0xCA,
         _6502_NOP = 0xEA,
+        _6502_JSR = 0x20,
+        _6502_BRK = 0x00,
+        _6502_RTI = 0x40,
+        _6502_RTS = 0x60
 }_6502_SPECIAL_OPS;
 
 int _6502_isSPECIAL(u8 inst);
+
+typedef enum {
+        _6502_COND_OP_N = 0,
+        _6502_COND_OP_O = 1,
+        _6502_COND_OP_C = 2,
+        _6502_COND_OP_Z = 3
+}_6502_CONDITIONAL_OP_FLAGS;
+
+int _6502_isCONDITIONAL(u8 inst);
 #endif

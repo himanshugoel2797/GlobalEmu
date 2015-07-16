@@ -10,7 +10,7 @@ typedef enum {
 } Endianness;
 
 Endianness tools_determineSystemEndian();
-int tools_endian_memcpy(void *src, void *dest, size_t len, Endianness targetEndian);
+int tools_endian_memcpy(void *dest, void *src, size_t len, Endianness targetEndian);
 
 extern inline int tools_getBit(int num, int bit, int bitCount, Endianness targetEndian);
 extern inline int tools_setBit(int num, int bit, int bitCount, Endianness targetEndian);

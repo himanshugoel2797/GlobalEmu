@@ -9,11 +9,11 @@ Endianness tools_determineSystemEndian()
         return UNKNOWN_ENDIAN;
 }
 
-int tools_endian_memcpy(void *src, void *dest, size_t len, Endianness targetEndian)
+int tools_endian_memcpy(void *dest, void *src, size_t len, Endianness targetEndian)
 {
         if(targetEndian == tools_determineSystemEndian()) //If the endiannness is the same, just memcpy
         {
-                memcpy(src, dest, len);
+                memcpy(dest, src, len);
                 return 0;
         }
 

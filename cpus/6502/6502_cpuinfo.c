@@ -26,10 +26,19 @@ int _6502_isSPECIAL(u8 inst)
         case _6502_TSX:
         case _6502_DEX:
         case _6502_NOP:
+        case _6502_JSR:
+        case _6502_BRK:
+        case _6502_RTS:
+        case _6502_RTI:
                 return 1;
                 break;
         default:
                 return 0;
         }
         return 0;
+}
+
+int _6502_isCONDITIONAL(u8 inst)
+{
+        return ( (inst & 0x0F) == 0 && ((inst >> 4) & 1) == 1);
 }

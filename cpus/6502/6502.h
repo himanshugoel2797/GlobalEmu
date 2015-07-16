@@ -13,4 +13,22 @@ u8* _6502_getMemory();
 /// Process a single instruction
 int _6502_processInstruction();
 
+/// Get a register value
+u8 _6502_getRegister(int reg);
+
+/// Set a register value
+int _6502_setRegister(int reg, u8 val);
+
+/// Get PC value
+u16 _6502_getPC();
+
+/// Set PC value
+int _6502_setPC(u16 val);
+
+/// Get SP value
+u16 _6502_getSP();
+
+/// Set SP value
+int _6502_setSP(u16 val);
+
 #endif
