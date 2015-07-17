@@ -2,8 +2,10 @@
 #include "6502_cpuinfo.h"
 #include "6502_instr.h"
 
-//6502 memory
-u8 *memory;
+//6502 memory accessors
+u8 (*readMem)(u16);
+void (*writeMem)(u16, u8);
+u8 *memBase;
 
 //6502 Register file
 u8 generalPurposeRegisters[4];
@@ -15,39 +17,33 @@ inline void decrement_sp()
 {
         sp--;
         spLoc--;
-        if(spLoc < memory + REAL_SP_END) spLoc = memory + REAL_SP_START;
+        if(spLoc < memBase + REAL_SP_END) spLoc = memBase + REAL_SP_START;
 }
 
 inline void increment_sp()
 {
         sp++;
         spLoc++;
-        if(spLoc > memory + REAL_SP_START) spLoc = memory + REAL_SP_END;
+        if(spLoc > memBase + REAL_SP_START) spLoc = memBase + REAL_SP_END;
 }
 
 
-int _6502_initialize(u8 *mem)
+int _6502_initialize(u8 *mem, u8 (*readByte)(u16), void (*writeByte)(u16, u8))
 {
-        memory = mem;
+        memBase = mem;
+        readMem = readByte;
+        writeMem = writeByte;
 
         //Initialize registers
         generalPurposeRegisters[REGS_ACCUM] = 0;
         generalPurposeRegisters[REGS_X] = 0;
         generalPurposeRegisters[REGS_Y] = 0;
-        generalPurposeRegisters[REGS_STATUS] = 0xFF;//~(1 << STATUS_INT); //Interrupts disabled
+        generalPurposeRegisters[REGS_STATUS] = 0x34;//~(1 << STATUS_INT); //Interrupts disabled
 
         sp = 0xFD;
-        spLoc = (memory + 0x1FD);
+        spLoc = (memBase + 0x1FD);
 
         return 0;
-}
-
-u8* _6502_getMemory(){
-        return memory;
-}
-void _6502_setMemory(u8 *mem){
-        memory = mem;
-        spLoc = (memory + sp);
 }
 
 u8 _6502_getRegister(int reg)
@@ -77,7 +73,7 @@ u16 _6502_getSP(){
 
 int _6502_setSP(u16 val)
 {
-        spLoc = memory + val;
+        spLoc = memBase + val;
         sp = val & 0xFF;
         return sp;
 }
@@ -92,7 +88,7 @@ int _6502_processTypeC(u8 a, u8 b, u8 c);
 int _6502_processInstruction()
 {
         if(pc == 0xffff) return -1;
-        u8 inst = memory[pc];
+        u8 inst = readMem(pc);
 
 
         u8 a = inst >> 5;
@@ -156,8 +152,8 @@ int _6502_processCONDITIONAL(u8 inst)
         if(valToCheck == cmpVal)
         {
                 cycleCount++;
-                if((pc & 0xFF00) < ((pc + (s8)memory[pc - 1]) & 0xFF00)) cycleCount++;
-                pc += (s8)memory[pc - 1];
+                if((pc & 0xFF00) < ((pc + (s8)readMem(pc - 1)) & 0xFF00)) cycleCount++;
+                pc += (s8)readMem(pc - 1);
         }
 
         return cycleCount;
@@ -269,7 +265,7 @@ int _6502_processSPECIAL(u8 inst)
         case _6502_TXS:
                 //SP = Register X
                 sp = generalPurposeRegisters[REGS_X];
-                spLoc = memory + 0x0100 + sp;
+                spLoc = memBase + 0x0100 + sp;
                 cycleCount = 2;
                 break;
         case _6502_TAX:
@@ -296,14 +292,11 @@ int _6502_processSPECIAL(u8 inst)
                 break;
         case _6502_JSR:
                 pc+=2;
-                u16 loc = memory[pc - 2] | (memory[pc - 1] << 8);
+                u16 loc = readMem(pc - 2) | (readMem(pc - 1) << 8);
                 *spLoc = ((pc - 1) & 0xFF00) >> 8;
-                printf("\nJSR\nSP_HI:%08x", *spLoc);
                 decrement_sp();
                 *spLoc = (pc - 1) & 0x00FF;
-                printf("\nSP_LO:%08x", *spLoc);
                 decrement_sp();
-                printf("\nPC:%08x\n", pc - 1);
                 pc = loc;
                 cycleCount = 6;
                 break;
@@ -316,14 +309,14 @@ int _6502_processSPECIAL(u8 inst)
                 *spLoc = generalPurposeRegisters[REGS_STATUS] | (3 << 4); //Enable both unused bits
                 ((_6502_STATUS*)&generalPurposeRegisters[REGS_STATUS])->I = 1;  //Disable interrupts
                 decrement_sp();
-                pc = memory[0xFFFE] | ( ((u16)memory[0xFFFF]) << 8);
+                pc = readMem(0xFFFE) | ( ((u16)readMem(0xFFFF)) << 8);
                 cycleCount = 7;
                 break;
         case _6502_RTI:
                 //TODO implement RTI
                 increment_sp();
-                printf("\nRTI!\n");
                 generalPurposeRegisters[REGS_STATUS] = *spLoc;
+                generalPurposeRegisters[REGS_STATUS] &= ~(1 << STATUS_INT); //Clear interrupt disable
                 increment_sp();
                 pc = *spLoc;
                 increment_sp();
@@ -333,12 +326,9 @@ int _6502_processSPECIAL(u8 inst)
         case _6502_RTS:
                 increment_sp();
                 u8 l = *spLoc;
-                printf("\nRET\nSP_LO:%08x", *spLoc);
                 increment_sp();
                 u8 h = *spLoc;
-                printf("\nSP_HI:%08x", *spLoc);
                 pc = (((u16)h << 8) | l) + 1;
-                printf("\nPC:%08x\n", pc);
                 cycleCount = 6;
                 break;
         default:

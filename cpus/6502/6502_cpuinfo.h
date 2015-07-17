@@ -31,7 +31,12 @@ typedef struct {
         u8 N : 1;
 }_6502_STATUS;
 
-extern u8 *memory;
+
+//6502 memory accessors
+extern u8 (*readMem)(u16);
+extern void (*writeMem)(u16, u8);
+extern u8 *memBase;
+
 extern u8 generalPurposeRegisters[4];
 extern u8 sp;
 extern u8 *spLoc;
